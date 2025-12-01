@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "github.com/metorial/fleet/node-manager/proto";
+
+service MetricsCollector {
+  rpc StreamMetrics(stream HostMetrics) returns (stream Acknowledgment);
+}
+
+message HostMetrics {
+  string hostname = 1;
+  string ip = 2;
+  int64 timestamp = 3;
+
+  HostInfo info = 4;
+  ResourceUsage usage = 5;
+}
+
+message HostInfo {
+  int64 uptime_seconds = 1;
+  int32 cpu_cores = 2;
+  int64 total_memory_bytes = 3;
+  int64 total_storage_bytes = 4;
+}
+
+message ResourceUsage {
+  double cpu_percent = 1;
+  int64 used_memory_bytes = 2;
+  int64 used_storage_bytes = 3;
+}
+
+message Acknowledgment {
+  bool success = 1;
+  string message = 2;
+}

@@ -1,0 +1,146 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Set GOTOOLCHAIN
+        run: echo "GOTOOLCHAIN=auto" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc musl-dev sqlite3 libsqlite3-dev protobuf-compiler
+
+      - name: Generate protobuf files
+        run: make proto
+
+      - name: Run tests
+        run: make test-unit
+
+      - name: Build binaries
+        run: |
+          # Create output directory
+          mkdir -p dist
+
+          # Build for multiple platforms
+          platforms=(
+            "linux/amd64"
+            "linux/arm64"
+            "darwin/amd64"
+            "darwin/arm64"
+            "windows/amd64"
+          )
+
+          for platform in "${platforms[@]}"; do
+            GOOS=${platform%/*}
+            GOARCH=${platform#*/}
+
+            echo "Building for $GOOS/$GOARCH..."
+
+            # Collector (needs CGO for SQLite)
+            if [ "$GOOS" = "linux" ]; then
+              output="dist/collector-$GOOS-$GOARCH"
+              [ "$GOOS" = "windows" ] && output+=".exe"
+              CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./cmd/collector
+              tar czf "dist/collector-$GOOS-$GOARCH.tar.gz" -C dist "collector-$GOOS-$GOARCH"
+            fi
+
+            # Outpost (needs CGO for SQLite)
+            if [ "$GOOS" = "linux" ]; then
+              output="dist/outpost-$GOOS-$GOARCH"
+              [ "$GOOS" = "windows" ] && output+=".exe"
+              CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./cmd/outpost
+              tar czf "dist/outpost-$GOOS-$GOARCH.tar.gz" -C dist "outpost-$GOOS-$GOARCH"
+            fi
+
+            # CLI (no CGO needed)
+            output="dist/nodectl-$GOOS-$GOARCH"
+            [ "$GOOS" = "windows" ] && output+=".exe"
+            GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./cmd/nodectl
+
+            if [ "$GOOS" = "windows" ]; then
+              zip -j "dist/nodectl-$GOOS-$GOARCH.zip" "$output"
+            else
+              tar czf "dist/nodectl-$GOOS-$GOARCH.tar.gz" -C dist "nodectl-$GOOS-$GOARCH"
+            fi
+          done
+
+          # Create checksums
+          cd dist
+          sha256sum *.tar.gz *.zip 2>/dev/null > checksums.txt || true
+          cd ..
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+          # Generate changelog from commits since last tag
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## What's Changed" > release_notes.md
+            echo "" >> release_notes.md
+            git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" >> release_notes.md
+          else
+            echo "## Initial Release" > release_notes.md
+          fi
+
+          echo "" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Docker Images" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Docker images are available at:" >> release_notes.md
+          echo "- \`ghcr.io/${{ github.repository }}/collector:$VERSION\`" >> release_notes.md
+          echo "- \`ghcr.io/${{ github.repository }}/outpost:$VERSION\`" >> release_notes.md
+          echo "- \`ghcr.io/${{ github.repository }}/nodectl:$VERSION\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### CLI (nodectl)" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Download the appropriate binary for your platform from the assets below." >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Linux/macOS:**" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "tar xzf nodectl-linux-amd64.tar.gz" >> release_notes.md
+          echo "sudo mv nodectl-linux-amd64 /usr/local/bin/nodectl" >> release_notes.md
+          echo "sudo chmod +x /usr/local/bin/nodectl" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Windows:**" >> release_notes.md
+          echo "Extract the zip file and add the binary to your PATH." >> release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

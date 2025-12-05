@@ -11,9 +11,10 @@ COPY . .
 
 RUN GOTOOLCHAIN=auto go build -o nodectl ./cmd/nodectl
 
-FROM alpine:latest
+FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates
+# Work around QEMU/buildkit trigger issue by using --no-scripts
+RUN apk add --no-cache --no-scripts ca-certificates tzdata
 
 WORKDIR /app
 

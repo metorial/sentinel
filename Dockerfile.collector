@@ -11,9 +11,10 @@ COPY . .
 
 RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o collector ./cmd/collector
 
-FROM alpine:latest
+FROM alpine:3.19
 
-RUN apk add --no-cache sqlite-libs ca-certificates
+# Work around QEMU/buildkit trigger issue by using --no-scripts
+RUN apk add --no-cache --no-scripts sqlite-libs ca-certificates tzdata
 
 WORKDIR /app
 

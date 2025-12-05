@@ -14,7 +14,8 @@ func TestHandleHealth(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
@@ -71,7 +72,8 @@ func TestHandleHosts(t *testing.T) {
 		t.Fatalf("Failed to insert host2: %v", err)
 	}
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
@@ -127,7 +129,8 @@ func TestHandleHost(t *testing.T) {
 		t.Fatalf("Failed to insert usage: %v", err)
 	}
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
@@ -160,7 +163,8 @@ func TestHandleHostNotFound(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
@@ -208,7 +212,8 @@ func TestHandleStats(t *testing.T) {
 		t.Fatalf("Failed to insert host2: %v", err)
 	}
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
@@ -251,7 +256,8 @@ func TestMethodNotAllowed(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	api := NewAPI(db)
+	server := NewServer(db)
+	api := NewAPI(db, server)
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 

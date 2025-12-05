@@ -51,14 +51,15 @@ func run() error {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	server := collector.NewServer(db)
+	pb.RegisterMetricsCollectorServer(grpcServer, server)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	mux := http.NewServeMux()
-	api := collector.NewAPI(db)
+	api := collector.NewAPI(db, server)
 	api.RegisterRoutes(mux)
 
 	httpServer := &http.Server{

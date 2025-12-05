@@ -66,13 +66,24 @@ func TestStreamMetrics(t *testing.T) {
 		},
 	}
 
-	if err := stream.Send(metrics); err != nil {
+	msg := &pb.OutpostMessage{
+		Payload: &pb.OutpostMessage_Metrics{
+			Metrics: metrics,
+		},
+	}
+
+	if err := stream.Send(msg); err != nil {
 		t.Fatalf("Failed to send metrics: %v", err)
 	}
 
-	ack, err := stream.Recv()
+	response, err := stream.Recv()
 	if err != nil {
-		t.Fatalf("Failed to receive ack: %v", err)
+		t.Fatalf("Failed to receive response: %v", err)
+	}
+
+	ack := response.GetAck()
+	if ack == nil {
+		t.Fatal("Expected acknowledgment, got nil")
 	}
 
 	if !ack.Success {

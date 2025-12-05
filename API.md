@@ -133,6 +133,213 @@ Retrieve aggregate statistics for the entire cluster.
 **Status Codes**
 - `200 OK`: Success
 
+## Script Management
+
+### List All Scripts
+
+**GET /api/v1/scripts**
+
+Retrieve all scripts that have been created.
+
+**Response**
+```json
+{
+  "scripts": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "update-packages",
+      "content": "#!/bin/bash\napt-get update && apt-get upgrade -y",
+      "sha256_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "created_at": "2025-12-05T10:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+
+### Create Script
+
+**POST /api/v1/scripts**
+
+Create a new script and distribute it to hosts. Scripts are sent to all online hosts, or only to hosts with specific tags if provided.
+
+**Request Body**
+```json
+{
+  "name": "update-packages",
+  "content": "#!/bin/bash\napt-get update && apt-get upgrade -y",
+  "tags": ["production", "web-server"]
+}
+```
+
+**Parameters**
+- `name` (required): Human-readable name for the script
+- `content` (required): Script content (bash/shell script)
+- `tags` (optional): Array of tags to filter target hosts. If empty/omitted, script is sent to all online hosts.
+
+**Script Execution**
+- Scripts are distributed immediately to matching online hosts via the gRPC stream
+- Each host tracks executed scripts by SHA256 hash and only runs each unique script once
+- Execution happens asynchronously on outpost agents
+- Results (exit code, stdout, stderr) are reported back to the collector
+
+**Response** `201 Created`
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "update-packages",
+  "content": "#!/bin/bash\napt-get update && apt-get upgrade -y",
+  "sha256_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+  "created_at": "2025-12-05T10:00:00Z"
+}
+```
+
+**Status Codes**
+- `201 Created`: Script created and distribution initiated
+- `400 Bad Request`: Missing name or content
+
+### Get Script Details
+
+**GET /api/v1/scripts/{script_id}**
+
+Retrieve script details and execution history across all hosts.
+
+**Path Parameters**
+- `script_id` (required): UUID of the script
+
+**Response**
+```json
+{
+  "script": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "update-packages",
+    "content": "#!/bin/bash\napt-get update && apt-get upgrade -y",
+    "sha256_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "created_at": "2025-12-05T10:00:00Z"
+  },
+  "executions": [
+    {
+      "id": 1,
+      "script_id": "550e8400-e29b-41d4-a716-446655440000",
+      "host_id": 1,
+      "hostname": "server-01",
+      "sha256_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "exit_code": 0,
+      "stdout": "Reading package lists...\nDone\n",
+      "stderr": "",
+      "executed_at": "2025-12-05T10:01:00Z"
+    }
+  ]
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+- `404 Not Found`: Script not found
+
+### Delete Script
+
+**DELETE /api/v1/scripts/{script_id}**
+
+Delete a script and its execution history.
+
+**Path Parameters**
+- `script_id` (required): UUID of the script
+
+**Response**
+```json
+{
+  "message": "Script deleted successfully"
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+- `404 Not Found`: Script not found (but deletion succeeds anyway)
+
+## Tag Management
+
+### List All Tags
+
+**GET /api/v1/tags**
+
+Retrieve all tags that have been created.
+
+**Response**
+```json
+{
+  "tags": [
+    {
+      "id": 1,
+      "name": "production",
+      "created_at": "2025-12-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "web-server",
+      "created_at": "2025-12-01T00:00:00Z"
+    }
+  ],
+  "count": 2
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+
+### Add Tag to Host
+
+**POST /api/v1/hosts/tags**
+
+Associate a tag with a host. Tags are automatically created if they don't exist.
+
+**Request Body**
+```json
+{
+  "hostname": "server-01",
+  "tag": "production"
+}
+```
+
+**Response**
+```json
+{
+  "message": "Tag added successfully"
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+- `400 Bad Request`: Missing hostname or tag
+
+### Remove Tag from Host
+
+**DELETE /api/v1/hosts/tags**
+
+Remove a tag association from a host.
+
+**Request Body**
+```json
+{
+  "hostname": "server-01",
+  "tag": "production"
+}
+```
+
+**Response**
+```json
+{
+  "message": "Tag removed successfully"
+}
+```
+
+**Status Codes**
+- `200 OK`: Success
+- `400 Bad Request`: Missing hostname or tag
+
 ## Error Responses
 
 All endpoints may return the following error responses:

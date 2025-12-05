@@ -24,15 +24,14 @@ func main() {
 }
 
 func run() error {
-	consulAddr := getEnv("CONSUL_HTTP_ADDR", defaultConsulAddr)
+	collectorURL := os.Getenv("COLLECTOR_URL")
+	consulAddr := getEnv("CONSUL_HTTP_ADDR", "")
+
+	if collectorURL == "" && consulAddr == "" {
+		log.Fatal("Either COLLECTOR_URL or CONSUL_HTTP_ADDR must be set")
+	}
 
 	log.Printf("Starting outpost service")
-	log.Printf("Consul address: %s", consulAddr)
-
-	discovery, err := outpost.NewServiceDiscovery(consulAddr)
-	if err != nil {
-		return err
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -45,6 +44,32 @@ func run() error {
 		log.Printf("Received signal: %v", sig)
 		cancel()
 	}()
+
+	if collectorURL != "" {
+		log.Printf("Using direct collector URL: %s", collectorURL)
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("Shutting down")
+				return nil
+			default:
+				if err := runClient(ctx, collectorURL); err != nil {
+					log.Printf("Client error: %v, retrying...", err)
+					time.Sleep(defaultRetryDelay)
+				}
+			}
+		}
+	}
+
+	if consulAddr == "" {
+		consulAddr = defaultConsulAddr
+	}
+	log.Printf("Using Consul service discovery at: %s", consulAddr)
+
+	discovery, err := outpost.NewServiceDiscovery(consulAddr)
+	if err != nil {
+		return err
+	}
 
 	addrChan := discovery.WatchCollector()
 

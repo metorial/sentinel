@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetricsCollectorClient interface {
-	StreamMetrics(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[HostMetrics, Acknowledgment], error)
+	StreamMetrics(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[OutpostMessage, CollectorMessage], error)
 }
 
 type metricsCollectorClient struct {
@@ -37,24 +37,24 @@ func NewMetricsCollectorClient(cc grpc.ClientConnInterface) MetricsCollectorClie
 	return &metricsCollectorClient{cc}
 }
 
-func (c *metricsCollectorClient) StreamMetrics(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[HostMetrics, Acknowledgment], error) {
+func (c *metricsCollectorClient) StreamMetrics(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[OutpostMessage, CollectorMessage], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &MetricsCollector_ServiceDesc.Streams[0], MetricsCollector_StreamMetrics_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[HostMetrics, Acknowledgment]{ClientStream: stream}
+	x := &grpc.GenericClientStream[OutpostMessage, CollectorMessage]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MetricsCollector_StreamMetricsClient = grpc.BidiStreamingClient[HostMetrics, Acknowledgment]
+type MetricsCollector_StreamMetricsClient = grpc.BidiStreamingClient[OutpostMessage, CollectorMessage]
 
 // MetricsCollectorServer is the server API for MetricsCollector service.
 // All implementations must embed UnimplementedMetricsCollectorServer
 // for forward compatibility.
 type MetricsCollectorServer interface {
-	StreamMetrics(grpc.BidiStreamingServer[HostMetrics, Acknowledgment]) error
+	StreamMetrics(grpc.BidiStreamingServer[OutpostMessage, CollectorMessage]) error
 	mustEmbedUnimplementedMetricsCollectorServer()
 }
 
@@ -65,7 +65,7 @@ type MetricsCollectorServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMetricsCollectorServer struct{}
 
-func (UnimplementedMetricsCollectorServer) StreamMetrics(grpc.BidiStreamingServer[HostMetrics, Acknowledgment]) error {
+func (UnimplementedMetricsCollectorServer) StreamMetrics(grpc.BidiStreamingServer[OutpostMessage, CollectorMessage]) error {
 	return status.Errorf(codes.Unimplemented, "method StreamMetrics not implemented")
 }
 func (UnimplementedMetricsCollectorServer) mustEmbedUnimplementedMetricsCollectorServer() {}
@@ -90,11 +90,11 @@ func RegisterMetricsCollectorServer(s grpc.ServiceRegistrar, srv MetricsCollecto
 }
 
 func _MetricsCollector_StreamMetrics_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MetricsCollectorServer).StreamMetrics(&grpc.GenericServerStream[HostMetrics, Acknowledgment]{ServerStream: stream})
+	return srv.(MetricsCollectorServer).StreamMetrics(&grpc.GenericServerStream[OutpostMessage, CollectorMessage]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MetricsCollector_StreamMetricsServer = grpc.BidiStreamingServer[HostMetrics, Acknowledgment]
+type MetricsCollector_StreamMetricsServer = grpc.BidiStreamingServer[OutpostMessage, CollectorMessage]
 
 // MetricsCollector_ServiceDesc is the grpc.ServiceDesc for MetricsCollector service.
 // It's only intended for direct use with grpc.RegisterService,

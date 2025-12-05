@@ -35,3 +35,10 @@ go.work.sum
 bin/
 *.db
 *.db-journal
+
+collector
+outpost
+nodectl
+
+# Prevent proto files from being generated outside proto/
+github.com/

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package metrics;
 
-option go_package = "github.com/metorial/fleet/node-manager/proto";
+option go_package = "github.com/metorial/command-core/proto";
 
 service MetricsCollector {
   rpc StreamMetrics(stream OutpostMessage) returns (stream CollectorMessage);

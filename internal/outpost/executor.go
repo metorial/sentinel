@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	pb "github.com/metorial/fleet/node-manager/proto"
+	pb "github.com/metorial/command-core/proto"
 )
 
 type ScriptExecutor struct {
@@ -25,7 +25,7 @@ func NewScriptExecutor() (*ScriptExecutor, error) {
 		homeDir = "/tmp"
 	}
 
-	stateFile := filepath.Join(homeDir, ".node-manager-scripts.json")
+	stateFile := filepath.Join(homeDir, ".command-core-scripts.json")
 
 	executor := &ScriptExecutor{
 		stateFile: stateFile,

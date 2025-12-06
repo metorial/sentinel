@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/metorial/fleet/node-manager/internal/cli"
+	"github.com/metorial/command-core/internal/cli"
 	"github.com/spf13/cobra"
 )
 

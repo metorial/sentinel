@@ -1,4 +1,4 @@
-.PHONY: all proto build build-collector build-outpost build-cli docker clean install-outpost install-cli test test-unit test-integration test-coverage
+.PHONY: all proto build build-commander build-outpost build-cli docker clean install-outpost install-cli test test-unit test-integration test-coverage
 
 all: proto build
 
@@ -7,10 +7,10 @@ proto:
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		proto/metrics.proto
 
-build: build-collector build-outpost build-cli
+build: build-commander build-outpost build-cli
 
-build-collector:
-	CGO_ENABLED=0 go build -o bin/collector ./cmd/collector
+build-commander:
+	CGO_ENABLED=0 go build -o bin/commander ./cmd/commander
 
 build-outpost:
 	CGO_ENABLED=0 go build -o bin/outpost ./cmd/outpost
@@ -19,7 +19,7 @@ build-cli:
 	CGO_ENABLED=0 go build -o bin/nodectl ./cmd/nodectl
 
 docker:
-	docker build -t node-metrics-collector:latest .
+	docker build -t command-core-commander:latest -f Dockerfile.commander .
 
 install-outpost: build-outpost
 	sudo cp bin/outpost /usr/local/bin/node-outpost

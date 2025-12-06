@@ -1,4 +1,4 @@
-package collector
+package commander
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/models"
-	pb "github.com/metorial/fleet/node-manager/proto"
+	"github.com/metorial/command-core/internal/models"
+	pb "github.com/metorial/command-core/proto"
 )
 
 type Server struct {

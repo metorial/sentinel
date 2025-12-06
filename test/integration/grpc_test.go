@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/collector"
-	"github.com/metorial/fleet/node-manager/internal/outpost"
-	pb "github.com/metorial/fleet/node-manager/proto"
+	"github.com/metorial/command-core/internal/commander"
+	"github.com/metorial/command-core/internal/outpost"
+	pb "github.com/metorial/command-core/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -23,7 +23,7 @@ func TestFullGRPCFlow(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestFullGRPCFlow(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
@@ -122,7 +122,7 @@ func TestMultipleClients(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestMultipleClients(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
@@ -256,7 +256,7 @@ func TestInactiveHostMarking(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -269,7 +269,7 @@ func TestInactiveHostMarking(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {

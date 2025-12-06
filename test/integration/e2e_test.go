@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/collector"
-	"github.com/metorial/fleet/node-manager/internal/outpost"
-	pb "github.com/metorial/fleet/node-manager/proto"
+	"github.com/metorial/command-core/internal/commander"
+	"github.com/metorial/command-core/internal/outpost"
+	pb "github.com/metorial/command-core/proto"
 	"google.golang.org/grpc"
 )
 
@@ -24,7 +24,7 @@ func TestEndToEndWithConsul(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestEndToEndWithConsul(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
@@ -55,7 +55,7 @@ func TestEndToEndWithConsul(t *testing.T) {
 	}
 
 	consulServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/v1/health/service/node-metrics-collector" {
+		if r.URL.Path == "/v1/health/service/command-core-commander" {
 			response := []map[string]interface{}{
 				{
 					"Node": map[string]interface{}{
@@ -82,7 +82,7 @@ func TestEndToEndWithConsul(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	discoveredAddr, err := sd.DiscoverCollector()
+	discoveredAddr, err := sd.DiscoverCommander()
 	if err != nil {
 		t.Fatalf("Failed to discover collector: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestEndToEndWithServiceDiscoveryWatch(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -178,7 +178,7 @@ func TestEndToEndWithServiceDiscoveryWatch(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
@@ -218,7 +218,7 @@ func TestEndToEndWithServiceDiscoveryWatch(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	addrChan := sd.WatchCollector()
+	addrChan := sd.WatchCommander()
 
 	select {
 	case addr := <-addrChan:
@@ -262,7 +262,7 @@ func TestDataRetentionAndCleanup(t *testing.T) {
 	dbPath := t.TempDir() + "/test.db"
 	defer os.Remove(dbPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -275,7 +275,7 @@ func TestDataRetentionAndCleanup(t *testing.T) {
 	defer listener.Close()
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMetricsCollectorServer(grpcServer, collector.NewServer(db))
+	pb.RegisterMetricsCollectorServer(grpcServer, commander.NewServer(db))
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {

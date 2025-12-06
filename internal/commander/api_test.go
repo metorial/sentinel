@@ -1,4 +1,4 @@
-package collector
+package commander
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/models"
+	"github.com/metorial/command-core/internal/models"
 )
 
 func TestHandleHealth(t *testing.T) {

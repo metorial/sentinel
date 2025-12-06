@@ -12,8 +12,8 @@ import (
 	"time"
 
 	consul "github.com/hashicorp/consul/api"
-	"github.com/metorial/fleet/node-manager/internal/collector"
-	pb "github.com/metorial/fleet/node-manager/proto"
+	"github.com/metorial/command-core/internal/commander"
+	pb "github.com/metorial/command-core/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -39,7 +39,7 @@ func run() error {
 	httpPort := getEnv("HTTP_PORT", defaultHTTPPort)
 	dbPath := getEnv("DB_PATH", defaultDBPath)
 
-	db, err := collector.NewDB(dbPath)
+	db, err := commander.NewDB(dbPath)
 	if err != nil {
 		return fmt.Errorf("initialize database: %w", err)
 	}
@@ -51,7 +51,7 @@ func run() error {
 	}
 
 	grpcServer := grpc.NewServer()
-	server := collector.NewServer(db)
+	server := commander.NewServer(db)
 	pb.RegisterMetricsCollectorServer(grpcServer, server)
 
 	healthServer := health.NewServer()
@@ -59,7 +59,7 @@ func run() error {
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	mux := http.NewServeMux()
-	api := collector.NewAPI(db, server)
+	api := commander.NewAPI(db, server)
 	api.RegisterRoutes(mux)
 
 	httpServer := &http.Server{
@@ -102,7 +102,7 @@ func run() error {
 	}
 }
 
-func startMaintenanceTasks(ctx context.Context, db *collector.DB) {
+func startMaintenanceTasks(ctx context.Context, db *commander.DB) {
 	inactiveTicker := time.NewTicker(10 * time.Second)
 	cleanupTicker := time.NewTicker(defaultCleanupInterval)
 	defer inactiveTicker.Stop()
@@ -143,8 +143,8 @@ func registerConsul(port, httpPort string) error {
 	}
 
 	registration := &consul.AgentServiceRegistration{
-		ID:      "node-metrics-collector",
-		Name:    "node-metrics-collector",
+		ID:      "command-core-commander",
+		Name:    "command-core-commander",
 		Port:    mustAtoi(port),
 		Address: nodeIP,
 		Check: &consul.AgentServiceCheck{
@@ -153,7 +153,7 @@ func registerConsul(port, httpPort string) error {
 			Timeout:                        "5s",
 			DeregisterCriticalServiceAfter: "30s",
 		},
-		Tags: []string{"metrics", "collector", "grpc"},
+		Tags: []string{"metrics", "commander", "grpc"},
 	}
 
 	if err := client.Agent().ServiceRegister(registration); err != nil {
@@ -161,8 +161,8 @@ func registerConsul(port, httpPort string) error {
 	}
 
 	httpRegistration := &consul.AgentServiceRegistration{
-		ID:      "node-metrics-collector-http",
-		Name:    "node-metrics-collector-http",
+		ID:      "command-core-commander-http",
+		Name:    "command-core-commander-http",
 		Port:    mustAtoi(httpPort),
 		Address: nodeIP,
 		Check: &consul.AgentServiceCheck{
@@ -171,7 +171,7 @@ func registerConsul(port, httpPort string) error {
 			Timeout:                        "5s",
 			DeregisterCriticalServiceAfter: "30s",
 		},
-		Tags: []string{"metrics", "collector", "http", "api"},
+		Tags: []string{"metrics", "commander", "http", "api"},
 	}
 
 	return client.Agent().ServiceRegister(httpRegistration)
@@ -191,11 +191,11 @@ func deregisterConsul() {
 		return
 	}
 
-	if err := client.Agent().ServiceDeregister("node-metrics-collector"); err != nil {
+	if err := client.Agent().ServiceDeregister("command-core-commander"); err != nil {
 		log.Printf("Error deregistering gRPC service: %v", err)
 	}
 
-	if err := client.Agent().ServiceDeregister("node-metrics-collector-http"); err != nil {
+	if err := client.Agent().ServiceDeregister("command-core-commander-http"); err != nil {
 		log.Printf("Error deregistering HTTP service: %v", err)
 	}
 }

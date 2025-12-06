@@ -1,11 +1,11 @@
-package collector
+package commander
 
 import (
 	"os"
 	"testing"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/models"
+	"github.com/metorial/command-core/internal/models"
 )
 
 func TestNewDB(t *testing.T) {

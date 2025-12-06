@@ -28,14 +28,14 @@ func NewServiceDiscovery(consulAddr string) (*ServiceDiscovery, error) {
 	}, nil
 }
 
-func (sd *ServiceDiscovery) DiscoverCollector() (string, error) {
-	services, _, err := sd.client.Health().Service("node-metrics-collector", "", true, nil)
+func (sd *ServiceDiscovery) DiscoverCommander() (string, error) {
+	services, _, err := sd.client.Health().Service("command-core-commander", "", true, nil)
 	if err != nil {
 		return "", fmt.Errorf("query consul: %w", err)
 	}
 
 	if len(services) == 0 {
-		return "", fmt.Errorf("no healthy collector services found")
+		return "", fmt.Errorf("no healthy commander services found")
 	}
 
 	service := services[0]
@@ -47,13 +47,13 @@ func (sd *ServiceDiscovery) DiscoverCollector() (string, error) {
 	return fmt.Sprintf("%s:%d", addr, service.Service.Port), nil
 }
 
-func (sd *ServiceDiscovery) WatchCollector() <-chan string {
+func (sd *ServiceDiscovery) WatchCommander() <-chan string {
 	addrChan := make(chan string, 1)
 
 	go func() {
 		var lastAddr string
 		for {
-			addr, err := sd.DiscoverCollector()
+			addr, err := sd.DiscoverCommander()
 			if err != nil {
 				log.Printf("Discovery failed: %v", err)
 				time.Sleep(5 * time.Second)
@@ -61,7 +61,7 @@ func (sd *ServiceDiscovery) WatchCollector() <-chan string {
 			}
 
 			if addr != lastAddr {
-				log.Printf("Discovered collector at: %s", addr)
+				log.Printf("Discovered commander at: %s", addr)
 				addrChan <- addr
 				lastAddr = addr
 			}

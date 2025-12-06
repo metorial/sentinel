@@ -1,15 +1,16 @@
-package collector
+package commander
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	pb "github.com/metorial/fleet/node-manager/proto"
+	"net"
+
+	pb "github.com/metorial/command-core/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	"net"
 )
 
 const bufSize = 1024 * 1024

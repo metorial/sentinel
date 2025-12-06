@@ -22,15 +22,15 @@ jobs:
     strategy:
       matrix:
         binary:
-          - name: collector
-            dockerfile: Dockerfile.collector
-            description: "Node Metrics Collector - API server for collecting and querying host metrics"
+          - name: commander
+            dockerfile: Dockerfile.commander
+            description: "Command Core Commander - API server for collecting and querying host metrics"
           - name: outpost
             dockerfile: Dockerfile.outpost
-            description: "Node Metrics Outpost - Agent for collecting system metrics"
+            description: "Command Core Outpost - Agent for collecting system metrics"
           - name: nodectl
             dockerfile: Dockerfile.nodectl
-            description: "Node Metrics CLI - Command-line interface for the collector"
+            description: "Command Core CLI - Command-line interface for the commander"
 
     steps:
       - name: Checkout code
@@ -51,7 +51,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/metorial/node-manager-${{ matrix.binary.name }}
+          images: ${{ env.REGISTRY }}/metorial/command-core-${{ matrix.binary.name }}
           tags: |
             type=ref,event=branch,suffix=-{{sha}}
             type=ref,event=pr

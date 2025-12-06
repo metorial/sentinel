@@ -9,7 +9,7 @@ RUN GOTOOLCHAIN=auto go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o collector ./cmd/collector
+RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o commander ./cmd/commander
 
 FROM alpine:3.19
 
@@ -18,10 +18,10 @@ RUN apk add --no-cache --no-scripts sqlite-libs ca-certificates tzdata
 
 WORKDIR /app
 
-COPY --from=builder /build/collector /app/collector
+COPY --from=builder /build/commander /app/commander
 
 RUN mkdir -p /data && chmod 777 /data
 
 EXPOSE 9090 8080
 
-CMD ["/app/collector"]
+CMD ["/app/commander"]

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/metorial/fleet/node-manager/proto"
+	pb "github.com/metorial/command-core/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"

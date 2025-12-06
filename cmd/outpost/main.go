@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/metorial/fleet/node-manager/internal/outpost"
+	"github.com/metorial/command-core/internal/outpost"
 )
 
 const (
-	defaultConsulAddr      = "127.0.0.1:8500"
-	defaultReportInterval  = 10 * time.Second
-	defaultRetryDelay      = 5 * time.Second
+	defaultConsulAddr     = "127.0.0.1:8500"
+	defaultReportInterval = 10 * time.Second
+	defaultRetryDelay     = 5 * time.Second
 )
 
 func main() {
@@ -71,7 +71,7 @@ func run() error {
 		return err
 	}
 
-	addrChan := discovery.WatchCollector()
+	addrChan := discovery.WatchCommander()
 
 	for {
 		select {

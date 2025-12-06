@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-func TestDiscoverCollector(t *testing.T) {
+func TestDiscoverCommander(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/health/service/node-metrics-collector" {
+		if r.URL.Path != "/v1/health/service/command-core-commander" {
 			t.Errorf("Unexpected path: %s", r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -38,7 +38,7 @@ func TestDiscoverCollector(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	addr, err := sd.DiscoverCollector()
+	addr, err := sd.DiscoverCommander()
 	if err != nil {
 		t.Fatalf("Failed to discover collector: %v", err)
 	}
@@ -49,7 +49,7 @@ func TestDiscoverCollector(t *testing.T) {
 	}
 }
 
-func TestDiscoverCollectorNoServices(t *testing.T) {
+func TestDiscoverCommanderNoServices(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode([]map[string]interface{}{})
@@ -61,13 +61,13 @@ func TestDiscoverCollectorNoServices(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	_, err = sd.DiscoverCollector()
+	_, err = sd.DiscoverCommander()
 	if err == nil {
 		t.Error("Expected error when no services found")
 	}
 }
 
-func TestDiscoverCollectorUsesNodeAddress(t *testing.T) {
+func TestDiscoverCommanderUsesNodeAddress(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := []map[string]interface{}{
 			{
@@ -91,7 +91,7 @@ func TestDiscoverCollectorUsesNodeAddress(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	addr, err := sd.DiscoverCollector()
+	addr, err := sd.DiscoverCommander()
 	if err != nil {
 		t.Fatalf("Failed to discover collector: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestDiscoverCollectorUsesNodeAddress(t *testing.T) {
 	}
 }
 
-func TestWatchCollector(t *testing.T) {
+func TestWatchCommander(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -128,7 +128,7 @@ func TestWatchCollector(t *testing.T) {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
 
-	addrChan := sd.WatchCollector()
+	addrChan := sd.WatchCommander()
 
 	select {
 	case addr := <-addrChan:

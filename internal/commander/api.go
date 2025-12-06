@@ -1,4 +1,4 @@
-package collector
+package commander
 
 import (
 	"crypto/sha256"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/metorial/fleet/node-manager/internal/models"
+	"github.com/metorial/command-core/internal/models"
 )
 
 type API struct {

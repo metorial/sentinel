@@ -5,11 +5,11 @@ import (
 	"os"
 	"time"
 
+	pb "github.com/metorial/command-core/proto"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
-	pb "github.com/metorial/fleet/node-manager/proto"
 )
 
 type MetricsCollector struct {

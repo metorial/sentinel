@@ -636,7 +636,7 @@ const file_proto_metrics_proto_rawDesc = "" +
 	"\vexecuted_at\x18\x06 \x01(\x03R\n" +
 	"executedAt2[\n" +
 	"\x10MetricsCollector\x12G\n" +
-	"\rStreamMetrics\x12\x17.metrics.OutpostMessage\x1a\x19.metrics.CollectorMessage(\x010\x01B.Z,github.com/metorial/fleet/node-manager/protob\x06proto3"
+	"\rStreamMetrics\x12\x17.metrics.OutpostMessage\x1a\x19.metrics.CollectorMessage(\x010\x01B(Z&github.com/metorial/command-core/protob\x06proto3"
 
 var (
 	file_proto_metrics_proto_rawDescOnce sync.Once

@@ -1,12 +1,12 @@
-package collector
+package commander
 
 import (
 	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/metorial/command-core/internal/models"
 	_ "modernc.org/sqlite"
-	"github.com/metorial/fleet/node-manager/internal/models"
 )
 
 type DB struct {

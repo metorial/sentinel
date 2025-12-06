@@ -73,7 +73,8 @@ func TestFullGRPCFlow(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := stream.Send(metrics); err != nil {
+		msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+		if err := stream.Send(msg); err != nil {
 			t.Fatalf("Failed to send metrics: %v", err)
 		}
 
@@ -82,8 +83,8 @@ func TestFullGRPCFlow(t *testing.T) {
 			t.Fatalf("Failed to receive ack: %v", err)
 		}
 
-		if !ack.Success {
-			t.Errorf("Expected success, got: %s", ack.Message)
+		if !ack.GetAck().Success {
+			t.Errorf("Expected success, got: %s", ack.GetAck().Message)
 		}
 
 		time.Sleep(100 * time.Millisecond)
@@ -186,7 +187,8 @@ func TestMultipleClients(t *testing.T) {
 			}
 
 			for j := 0; j < 3; j++ {
-				if err := stream.Send(metrics); err != nil {
+				msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+				if err := stream.Send(msg); err != nil {
 					t.Errorf("Client %d: Failed to send metrics: %v", clientID, err)
 					done <- false
 					return
@@ -199,8 +201,8 @@ func TestMultipleClients(t *testing.T) {
 					return
 				}
 
-				if !ack.Success {
-					t.Errorf("Client %d: Expected success, got: %s", clientID, ack.Message)
+				if !ack.GetAck().Success {
+					t.Errorf("Client %d: Expected success, got: %s", clientID, ack.GetAck().Message)
 				}
 
 				time.Sleep(50 * time.Millisecond)
@@ -309,7 +311,8 @@ func TestInactiveHostMarking(t *testing.T) {
 		},
 	}
 
-	if err := stream.Send(metrics); err != nil {
+	msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+	if err := stream.Send(msg); err != nil {
 		t.Fatalf("Failed to send metrics: %v", err)
 	}
 

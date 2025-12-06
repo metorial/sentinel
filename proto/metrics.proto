@@ -5,7 +5,7 @@ package metrics;
 option go_package = "github.com/metorial/fleet/node-manager/proto";
 
 service MetricsCollector {
-  rpc StreamMetrics(stream HostMetrics) returns (stream Acknowledgment);
+  rpc StreamMetrics(stream OutpostMessage) returns (stream CollectorMessage);
 }
 
 message HostMetrics {
@@ -33,4 +33,37 @@ message ResourceUsage {
 message Acknowledgment {
   bool success = 1;
   string message = 2;
+}
+
+// Wrapper for messages from outpost to collector
+message OutpostMessage {
+  oneof payload {
+    HostMetrics metrics = 1;
+    ScriptResult script_result = 2;
+  }
+}
+
+// Wrapper for messages from collector to outpost
+message CollectorMessage {
+  oneof payload {
+    Acknowledgment ack = 1;
+    ScriptCommand script_command = 2;
+  }
+}
+
+// Script to be executed on outpost
+message ScriptCommand {
+  string script_id = 1;        // Unique identifier for the script
+  string content = 2;          // Script content (bash/shell script)
+  string sha256_hash = 3;      // Hash for deduplication and verification
+}
+
+// Result of script execution
+message ScriptResult {
+  string script_id = 1;        // ID of the executed script
+  string sha256_hash = 2;      // Hash of the executed script
+  int32 exit_code = 3;         // Exit code from script execution
+  string stdout = 4;           // Standard output
+  string stderr = 5;           // Standard error
+  int64 executed_at = 6;       // Unix timestamp of execution
 }

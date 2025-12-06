@@ -63,6 +63,50 @@ func (db *DB) migrate() error {
 
 	CREATE INDEX IF NOT EXISTS idx_host_usage_host_id ON host_usage(host_id);
 	CREATE INDEX IF NOT EXISTS idx_host_usage_timestamp ON host_usage(timestamp);
+
+	CREATE TABLE IF NOT EXISTS tags (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL UNIQUE,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
+
+	CREATE TABLE IF NOT EXISTS host_tags (
+		host_id INTEGER NOT NULL,
+		tag_id INTEGER NOT NULL,
+		PRIMARY KEY (host_id, tag_id),
+		FOREIGN KEY (host_id) REFERENCES hosts(id) ON DELETE CASCADE,
+		FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+	);
+
+	CREATE TABLE IF NOT EXISTS scripts (
+		id TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		content TEXT NOT NULL,
+		sha256_hash TEXT NOT NULL UNIQUE,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_scripts_sha256 ON scripts(sha256_hash);
+	CREATE INDEX IF NOT EXISTS idx_scripts_name ON scripts(name);
+
+	CREATE TABLE IF NOT EXISTS script_executions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		script_id TEXT NOT NULL,
+		host_id INTEGER NOT NULL,
+		sha256_hash TEXT NOT NULL,
+		exit_code INTEGER NOT NULL,
+		stdout TEXT,
+		stderr TEXT,
+		executed_at TIMESTAMP NOT NULL,
+		FOREIGN KEY (script_id) REFERENCES scripts(id) ON DELETE CASCADE,
+		FOREIGN KEY (host_id) REFERENCES hosts(id) ON DELETE CASCADE
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_script_executions_script_id ON script_executions(script_id);
+	CREATE INDEX IF NOT EXISTS idx_script_executions_host_id ON script_executions(host_id);
+	CREATE INDEX IF NOT EXISTS idx_script_executions_hash_host ON script_executions(sha256_hash, host_id);
 	`
 
 	_, err := db.conn.Exec(schema)
@@ -231,4 +275,224 @@ func (db *DB) GetClusterStats() (map[string]interface{}, error) {
 	}
 
 	return stats, nil
+}
+
+// CreateScript creates a new script
+func (db *DB) CreateScript(script *models.Script) error {
+	query := `INSERT INTO scripts (id, name, content, sha256_hash, created_at)
+	          VALUES (?, ?, ?, ?, ?)`
+	_, err := db.conn.Exec(query, script.ID, script.Name, script.Content, script.SHA256Hash, script.CreatedAt)
+	return err
+}
+
+// GetScript retrieves a script by ID
+func (db *DB) GetScript(id string) (*models.Script, error) {
+	query := `SELECT id, name, content, sha256_hash, created_at FROM scripts WHERE id = ?`
+	var s models.Script
+	err := db.conn.QueryRow(query, id).Scan(&s.ID, &s.Name, &s.Content, &s.SHA256Hash, &s.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+// GetAllScripts retrieves all scripts
+func (db *DB) GetAllScripts() ([]models.Script, error) {
+	query := `SELECT id, name, content, sha256_hash, created_at FROM scripts ORDER BY created_at DESC`
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var scripts []models.Script
+	for rows.Next() {
+		var s models.Script
+		if err := rows.Scan(&s.ID, &s.Name, &s.Content, &s.SHA256Hash, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		scripts = append(scripts, s)
+	}
+	return scripts, rows.Err()
+}
+
+// DeleteScript deletes a script by ID
+func (db *DB) DeleteScript(id string) error {
+	query := `DELETE FROM scripts WHERE id = ?`
+	_, err := db.conn.Exec(query, id)
+	return err
+}
+
+// RecordScriptExecution records the result of a script execution
+func (db *DB) RecordScriptExecution(exec *models.ScriptExecution) error {
+	query := `INSERT INTO script_executions (script_id, host_id, sha256_hash, exit_code, stdout, stderr, executed_at)
+	          VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := db.conn.Exec(query, exec.ScriptID, exec.HostID, exec.SHA256Hash, exec.ExitCode, exec.Stdout, exec.Stderr, exec.ExecutedAt)
+	return err
+}
+
+// GetScriptExecutions retrieves executions for a script
+func (db *DB) GetScriptExecutions(scriptID string) ([]models.ScriptExecution, error) {
+	query := `SELECT se.id, se.script_id, se.host_id, h.hostname, se.sha256_hash, se.exit_code, se.stdout, se.stderr, se.executed_at
+	          FROM script_executions se
+	          JOIN hosts h ON se.host_id = h.id
+	          WHERE se.script_id = ?
+	          ORDER BY se.executed_at DESC`
+	rows, err := db.conn.Query(query, scriptID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var execs []models.ScriptExecution
+	for rows.Next() {
+		var e models.ScriptExecution
+		if err := rows.Scan(&e.ID, &e.ScriptID, &e.HostID, &e.Hostname, &e.SHA256Hash, &e.ExitCode, &e.Stdout, &e.Stderr, &e.ExecutedAt); err != nil {
+			return nil, err
+		}
+		execs = append(execs, e)
+	}
+	return execs, rows.Err()
+}
+
+// HasScriptExecuted checks if a script with given hash has been executed on a host
+func (db *DB) HasScriptExecuted(hostname, sha256Hash string) (bool, error) {
+	query := `SELECT COUNT(*) FROM script_executions se
+	          JOIN hosts h ON se.host_id = h.id
+	          WHERE h.hostname = ? AND se.sha256_hash = ?`
+	var count int
+	err := db.conn.QueryRow(query, hostname, sha256Hash).Scan(&count)
+	return count > 0, err
+}
+
+// CreateTag creates a new tag
+func (db *DB) CreateTag(name string) (int64, error) {
+	query := `INSERT INTO tags (name) VALUES (?) RETURNING id`
+	var id int64
+	err := db.conn.QueryRow(query, name).Scan(&id)
+	return id, err
+}
+
+// GetOrCreateTag gets a tag by name or creates it if it doesn't exist
+func (db *DB) GetOrCreateTag(name string) (int64, error) {
+	query := `SELECT id FROM tags WHERE name = ?`
+	var id int64
+	err := db.conn.QueryRow(query, name).Scan(&id)
+	if err == sql.ErrNoRows {
+		return db.CreateTag(name)
+	}
+	return id, err
+}
+
+// GetAllTags retrieves all tags
+func (db *DB) GetAllTags() ([]models.Tag, error) {
+	query := `SELECT id, name, created_at FROM tags ORDER BY name`
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []models.Tag
+	for rows.Next() {
+		var t models.Tag
+		if err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		tags = append(tags, t)
+	}
+	return tags, rows.Err()
+}
+
+// AddHostTag adds a tag to a host
+func (db *DB) AddHostTag(hostname, tagName string) error {
+	tagID, err := db.GetOrCreateTag(tagName)
+	if err != nil {
+		return err
+	}
+
+	host, err := db.GetHost(hostname)
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT OR IGNORE INTO host_tags (host_id, tag_id) VALUES (?, ?)`
+	_, err = db.conn.Exec(query, host.ID, tagID)
+	return err
+}
+
+// RemoveHostTag removes a tag from a host
+func (db *DB) RemoveHostTag(hostname, tagName string) error {
+	query := `DELETE FROM host_tags WHERE host_id = (SELECT id FROM hosts WHERE hostname = ?)
+	          AND tag_id = (SELECT id FROM tags WHERE name = ?)`
+	_, err := db.conn.Exec(query, hostname, tagName)
+	return err
+}
+
+// GetHostTags retrieves all tags for a host
+func (db *DB) GetHostTags(hostname string) ([]string, error) {
+	query := `SELECT t.name FROM tags t
+	          JOIN host_tags ht ON t.id = ht.tag_id
+	          JOIN hosts h ON ht.host_id = h.id
+	          WHERE h.hostname = ?
+	          ORDER BY t.name`
+	rows, err := db.conn.Query(query, hostname)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []string
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+	return tags, rows.Err()
+}
+
+// GetHostsByTags retrieves hosts that have ANY of the specified tags (OR logic)
+func (db *DB) GetHostsByTags(tags []string) ([]models.Host, error) {
+	if len(tags) == 0 {
+		return db.GetAllHosts()
+	}
+
+	placeholders := ""
+	args := make([]interface{}, len(tags))
+	for i, tag := range tags {
+		if i > 0 {
+			placeholders += ","
+		}
+		placeholders += "?"
+		args[i] = tag
+	}
+
+	query := `SELECT DISTINCT h.id, h.hostname, h.ip, h.uptime_seconds, h.cpu_cores, h.total_memory_bytes,
+	          h.total_storage_bytes, h.last_seen, h.online, h.created_at, h.updated_at
+	          FROM hosts h
+	          JOIN host_tags ht ON h.id = ht.host_id
+	          JOIN tags t ON ht.tag_id = t.id
+	          WHERE t.name IN (` + placeholders + `)
+	          ORDER BY h.hostname`
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var hosts []models.Host
+	for rows.Next() {
+		var h models.Host
+		err := rows.Scan(&h.ID, &h.Hostname, &h.IP, &h.UptimeSeconds, &h.CPUCores,
+			&h.TotalMemoryBytes, &h.TotalStorageBytes, &h.LastSeen, &h.Online,
+			&h.CreatedAt, &h.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		hosts = append(hosts, h)
+	}
+	return hosts, rows.Err()
 }

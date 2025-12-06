@@ -14,14 +14,21 @@ import (
 
 type Client struct {
 	collector *MetricsCollector
+	executor  *ScriptExecutor
 	conn      *grpc.ClientConn
 	stream    pb.MetricsCollector_StreamMetricsClient
+	hostname  string
 }
 
 func NewClient(collectorAddr string) (*Client, error) {
 	collector, err := NewMetricsCollector()
 	if err != nil {
 		return nil, fmt.Errorf("create metrics collector: %w", err)
+	}
+
+	executor, err := NewScriptExecutor()
+	if err != nil {
+		return nil, fmt.Errorf("create script executor: %w", err)
 	}
 
 	conn, err := grpc.NewClient(collectorAddr,
@@ -41,11 +48,13 @@ func NewClient(collectorAddr string) (*Client, error) {
 
 	c := &Client{
 		collector: collector,
+		executor:  executor,
 		conn:      conn,
 		stream:    stream,
+		hostname:  collector.hostname,
 	}
 
-	go c.receiveAcks()
+	go c.receiveMessages()
 
 	return c, nil
 }
@@ -72,28 +81,77 @@ func (c *Client) sendMetrics() error {
 		return fmt.Errorf("collect metrics: %w", err)
 	}
 
-	if err := c.stream.Send(metrics); err != nil {
+	msg := &pb.OutpostMessage{
+		Payload: &pb.OutpostMessage_Metrics{
+			Metrics: metrics,
+		},
+	}
+
+	if err := c.stream.Send(msg); err != nil {
 		return fmt.Errorf("send to stream: %w", err)
 	}
 
 	return nil
 }
 
-func (c *Client) receiveAcks() {
+func (c *Client) receiveMessages() {
 	for {
-		ack, err := c.stream.Recv()
+		msg, err := c.stream.Recv()
 		if err == io.EOF {
 			log.Println("Stream closed by server")
 			return
 		}
 		if err != nil {
-			log.Printf("Error receiving ack: %v", err)
+			log.Printf("Error receiving message: %v", err)
 			return
 		}
 
-		if !ack.Success {
-			log.Printf("Server reported error: %s", ack.Message)
+		switch payload := msg.Payload.(type) {
+		case *pb.CollectorMessage_Ack:
+			ack := payload.Ack
+			if !ack.Success {
+				log.Printf("Server reported error: %s", ack.Message)
+			}
+
+		case *pb.CollectorMessage_ScriptCommand:
+			cmd := payload.ScriptCommand
+			log.Printf("Received script command: %s", cmd.ScriptId)
+			go c.executeScript(cmd)
+
+		default:
+			log.Printf("Unknown message type: %T", payload)
 		}
+	}
+}
+
+func (c *Client) executeScript(cmd *pb.ScriptCommand) {
+	alreadyRun, err := c.executor.HasExecuted(cmd.Sha256Hash)
+	if err != nil {
+		log.Printf("Error checking script execution history: %v", err)
+		return
+	}
+
+	if alreadyRun {
+		log.Printf("Script %s already executed, skipping", cmd.ScriptId)
+		return
+	}
+
+	result, err := c.executor.Execute(cmd.ScriptId, cmd.Content, cmd.Sha256Hash)
+	if err != nil {
+		log.Printf("Error executing script %s: %v", cmd.ScriptId, err)
+		return
+	}
+
+	msg := &pb.OutpostMessage{
+		Payload: &pb.OutpostMessage_ScriptResult{
+			ScriptResult: result,
+		},
+	}
+
+	if err := c.stream.Send(msg); err != nil {
+		log.Printf("Error sending script result: %v", err)
+	} else {
+		log.Printf("Script %s executed successfully with exit code %d", cmd.ScriptId, result.ExitCode)
 	}
 }
 

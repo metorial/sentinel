@@ -24,18 +24,24 @@ type mockServer struct {
 
 func (m *mockServer) StreamMetrics(stream pb.MetricsCollector_StreamMetricsServer) error {
 	for {
-		metrics, err := stream.Recv()
+		msg, err := stream.Recv()
 		if err != nil {
 			return err
 		}
 
-		m.mu.Lock()
-		m.receivedMetrics = append(m.receivedMetrics, metrics)
-		m.mu.Unlock()
+		if metrics := msg.GetMetrics(); metrics != nil {
+			m.mu.Lock()
+			m.receivedMetrics = append(m.receivedMetrics, metrics)
+			m.mu.Unlock()
+		}
 
-		if err := stream.Send(&pb.Acknowledgment{
-			Success: true,
-			Message: "received",
+		if err := stream.Send(&pb.CollectorMessage{
+			Payload: &pb.CollectorMessage_Ack{
+				Ack: &pb.Acknowledgment{
+					Success: true,
+					Message: "received",
+				},
+			},
 		}); err != nil {
 			return err
 		}
@@ -144,12 +150,19 @@ func TestClientSendMetrics(t *testing.T) {
 		t.Fatalf("Failed to create stream: %v", err)
 	}
 
+	executor, err := NewScriptExecutor()
+	if err != nil {
+		t.Fatalf("Failed to create executor: %v", err)
+	}
+
 	client := &Client{
 		collector: collector,
+		executor:  executor,
 		conn:      conn,
 		stream:    stream,
+		hostname:  collector.hostname,
 	}
-	go client.receiveAcks()
+	go client.receiveMessages()
 
 	if err := client.sendMetrics(); err != nil {
 		// Skip test if CPU metrics not available (CGO disabled or platform limitation)
@@ -201,12 +214,19 @@ func TestClientStart(t *testing.T) {
 		t.Fatalf("Failed to create stream: %v", err)
 	}
 
+	executor, err := NewScriptExecutor()
+	if err != nil {
+		t.Fatalf("Failed to create executor: %v", err)
+	}
+
 	client := &Client{
 		collector: collector,
+		executor:  executor,
 		conn:      conn,
 		stream:    stream,
+		hostname:  collector.hostname,
 	}
-	go client.receiveAcks()
+	go client.receiveMessages()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 350*time.Millisecond)
 	defer cancel()

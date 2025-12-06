@@ -116,25 +116,21 @@ The Node Manager integrates with Consul for automatic service discovery and heal
 
 ```
 ┌─────────────┐
-│   Consul    │ ◄─── Service Registration
+│    Consul   │ ◄─── Service Registration
 └──────┬──────┘
        │ Service Discovery
        │
 ┌──────▼──────┐      gRPC Stream        ┌──────────────┐
-│  Outpost    ├─────────────────────────►   Collector  │
-│   Agent     │   Metrics + Scripts     │   (Server)   │
+│   Outpost   ├─────────────────────────►   Collector  │
+│    Agent    │   Metrics + Scripts     │   (Server)   │
 └─────────────┘   Results               └──────┬───────┘
-                                               │
-                                        ┌──────▼───────┐
-                                        │   SQLite DB  │
-                                        └──────────────┘
                                                │
                                         ┌──────▼───────┐
                                         │   HTTP API   │
                                         └──────┬───────┘
                                                │
                                         ┌──────▼───────┐
-                                        │   nodectl    │
+                                        │  (nodectl)   │
                                         └──────────────┘
 ```
 

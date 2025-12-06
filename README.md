@@ -143,7 +143,7 @@ graph TB
   style Commander fill:#4a9eff,stroke:#333,stroke-width:2px,color:#fff
   style Consul fill:#ca2171,stroke:#333,stroke-width:2px,color:#fff
   style DB fill:#669944,stroke:#333,stroke-width:2px,color:#fff
-  style CLI fill:#f0ad4e,stroke:#333,stroke-width:2px,color:#000>
+  style CLI fill:#f0ad4e,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ## License

@@ -1,4 +1,4 @@
-.PHONY: all proto build build-commander build-outpost build-cli docker clean install-outpost install-cli test test-unit test-integration test-coverage
+.PHONY: all proto build build-commander build-agent build-cli docker clean install-agent install-cli test test-unit test-integration test-coverage
 
 all: proto build
 
@@ -7,13 +7,13 @@ proto:
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		proto/metrics.proto
 
-build: build-controller build-outpost build-cli
+build: build-controller build-agent build-cli
 
 build-controller:
 	CGO_ENABLED=0 go build -o bin/controller ./cmd/commander
 
-build-outpost:
-	CGO_ENABLED=0 go build -o bin/outpost ./cmd/outpost
+build-agent:
+	CGO_ENABLED=0 go build -o bin/agent ./cmd/agent
 
 build-cli:
 	CGO_ENABLED=0 go build -o bin/nodectl ./cmd/nodectl
@@ -21,12 +21,12 @@ build-cli:
 docker:
 	docker build -t sentinel-controller:latest -f Dockerfile.controller .
 
-install-outpost: build-outpost
-	sudo cp bin/outpost /usr/local/bin/node-outpost
-	sudo cp deploy/node-outpost.service /etc/systemd/system/
+install-agent: build-agent
+	sudo cp bin/agent /usr/local/bin/node-agent
+	sudo cp deploy/node-agent.service /etc/systemd/system/
 	sudo systemctl daemon-reload
-	sudo systemctl enable node-outpost
-	sudo systemctl start node-outpost
+	sudo systemctl enable node-agent
+	sudo systemctl start node-agent
 
 install-cli: build-cli
 	sudo cp bin/nodectl /usr/local/bin/nodectl

@@ -64,15 +64,15 @@ jobs:
               tar czf "dist/commander-$GOOS-$GOARCH.tar.gz" -C dist "commander-$GOOS-$GOARCH"
             fi
 
-            # Outpost (pure Go SQLite - no CGO needed)
-            output="dist/outpost-$GOOS-$GOARCH"
+            # Agent (pure Go SQLite - no CGO needed)
+            output="dist/agent-$GOOS-$GOARCH"
             [ "$GOOS" = "windows" ] && output+=".exe"
-            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./cmd/outpost
+            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./cmd/agent
 
             if [ "$GOOS" = "windows" ]; then
-              zip -j "dist/outpost-$GOOS-$GOARCH.zip" "$output"
+              zip -j "dist/agent-$GOOS-$GOARCH.zip" "$output"
             else
-              tar czf "dist/outpost-$GOOS-$GOARCH.tar.gz" -C dist "outpost-$GOOS-$GOARCH"
+              tar czf "dist/agent-$GOOS-$GOARCH.tar.gz" -C dist "agent-$GOOS-$GOARCH"
             fi
 
             # CLI (no CGO needed)
@@ -115,7 +115,7 @@ jobs:
           echo "" >> release_notes.md
           echo "Docker images are available at:" >> release_notes.md
           echo "- \`ghcr.io/${{ github.repository }}/commander:$VERSION\`" >> release_notes.md
-          echo "- \`ghcr.io/${{ github.repository }}/outpost:$VERSION\`" >> release_notes.md
+          echo "- \`ghcr.io/${{ github.repository }}/agent:$VERSION\`" >> release_notes.md
           echo "- \`ghcr.io/${{ github.repository }}/nodectl:$VERSION\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "## Installation" >> release_notes.md

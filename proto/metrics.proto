@@ -5,7 +5,7 @@ package metrics;
 option go_package = "github.com/metorial/sentinel/proto";
 
 service MetricsCollector {
-  rpc StreamMetrics(stream OutpostMessage) returns (stream CollectorMessage);
+  rpc StreamMetrics(stream AgentMessage) returns (stream CollectorMessage);
 }
 
 message HostMetrics {
@@ -35,15 +35,15 @@ message Acknowledgment {
   string message = 2;
 }
 
-// Wrapper for messages from outpost to collector
-message OutpostMessage {
+// Wrapper for messages from agent to collector
+message AgentMessage {
   oneof payload {
     HostMetrics metrics = 1;
     ScriptResult script_result = 2;
   }
 }
 
-// Wrapper for messages from collector to outpost
+// Wrapper for messages from collector to agent
 message CollectorMessage {
   oneof payload {
     Acknowledgment ack = 1;
@@ -51,7 +51,7 @@ message CollectorMessage {
   }
 }
 
-// Script to be executed on outpost
+// Script to be executed on agent
 message ScriptCommand {
   string script_id = 1;        // Unique identifier for the script
   string content = 2;          // Script content (bash/shell script)

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/metorial/sentinel/internal/commander"
-	"github.com/metorial/sentinel/internal/outpost"
+	"github.com/metorial/sentinel/internal/agent"
 	pb "github.com/metorial/sentinel/proto"
 	"google.golang.org/grpc"
 )
@@ -77,7 +77,7 @@ func TestEndToEndWithConsul(t *testing.T) {
 	}))
 	defer consulServer.Close()
 
-	sd, err := outpost.NewServiceDiscovery(consulServer.URL[7:])
+	sd, err := agent.NewServiceDiscovery(consulServer.URL[7:])
 	if err != nil {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
@@ -89,12 +89,12 @@ func TestEndToEndWithConsul(t *testing.T) {
 
 	t.Logf("Discovered collector at: %s (actual: %s)", discoveredAddr, collectorAddr)
 
-	mc, err := outpost.NewMetricsCollector()
+	mc, err := agent.NewMetricsCollector()
 	if err != nil {
 		t.Fatalf("Failed to create metrics collector: %v", err)
 	}
 
-	client, err := outpost.NewClient(collectorAddr)
+	client, err := agent.NewClient(collectorAddr)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -213,7 +213,7 @@ func TestEndToEndWithServiceDiscoveryWatch(t *testing.T) {
 	}))
 	defer consulServer.Close()
 
-	sd, err := outpost.NewServiceDiscovery(consulServer.URL[7:])
+	sd, err := agent.NewServiceDiscovery(consulServer.URL[7:])
 	if err != nil {
 		t.Fatalf("Failed to create service discovery: %v", err)
 	}
@@ -224,7 +224,7 @@ func TestEndToEndWithServiceDiscoveryWatch(t *testing.T) {
 	case addr := <-addrChan:
 		t.Logf("Discovered collector via watch: %s", addr)
 
-		client, err := outpost.NewClient(collectorAddr)
+		client, err := agent.NewClient(collectorAddr)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
@@ -286,7 +286,7 @@ func TestDataRetentionAndCleanup(t *testing.T) {
 
 	collectorAddr := listener.Addr().String()
 
-	client, err := outpost.NewClient(collectorAddr)
+	client, err := agent.NewClient(collectorAddr)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}

@@ -25,9 +25,9 @@ jobs:
           - name: controller
             dockerfile: Dockerfile.controller
             description: "Sentinel Controller - API server for collecting and querying host metrics"
-          - name: outpost
-            dockerfile: Dockerfile.outpost
-            description: "Sentinel Outpost - Agent for collecting system metrics"
+          - name: agent
+            dockerfile: Dockerfile.agent
+            description: "Sentinel Agent - Agent for collecting system metrics"
           - name: nodectl
             dockerfile: Dockerfile.nodectl
             description: "Sentinel CLI - Command-line interface for the controller"

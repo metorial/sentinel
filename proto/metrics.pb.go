@@ -277,32 +277,32 @@ func (x *Acknowledgment) GetMessage() string {
 	return ""
 }
 
-// Wrapper for messages from outpost to collector
-type OutpostMessage struct {
+// Wrapper for messages from agent to collector
+type AgentMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Payload:
 	//
-	//	*OutpostMessage_Metrics
-	//	*OutpostMessage_ScriptResult
-	Payload       isOutpostMessage_Payload `protobuf_oneof:"payload"`
+	//	*AgentMessage_Metrics
+	//	*AgentMessage_ScriptResult
+	Payload       isAgentMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *OutpostMessage) Reset() {
-	*x = OutpostMessage{}
+func (x *AgentMessage) Reset() {
+	*x = AgentMessage{}
 	mi := &file_proto_metrics_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OutpostMessage) String() string {
+func (x *AgentMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OutpostMessage) ProtoMessage() {}
+func (*AgentMessage) ProtoMessage() {}
 
-func (x *OutpostMessage) ProtoReflect() protoreflect.Message {
+func (x *AgentMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_metrics_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -314,53 +314,53 @@ func (x *OutpostMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OutpostMessage.ProtoReflect.Descriptor instead.
-func (*OutpostMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use AgentMessage.ProtoReflect.Descriptor instead.
+func (*AgentMessage) Descriptor() ([]byte, []int) {
 	return file_proto_metrics_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *OutpostMessage) GetPayload() isOutpostMessage_Payload {
+func (x *AgentMessage) GetPayload() isAgentMessage_Payload {
 	if x != nil {
 		return x.Payload
 	}
 	return nil
 }
 
-func (x *OutpostMessage) GetMetrics() *HostMetrics {
+func (x *AgentMessage) GetMetrics() *HostMetrics {
 	if x != nil {
-		if x, ok := x.Payload.(*OutpostMessage_Metrics); ok {
+		if x, ok := x.Payload.(*AgentMessage_Metrics); ok {
 			return x.Metrics
 		}
 	}
 	return nil
 }
 
-func (x *OutpostMessage) GetScriptResult() *ScriptResult {
+func (x *AgentMessage) GetScriptResult() *ScriptResult {
 	if x != nil {
-		if x, ok := x.Payload.(*OutpostMessage_ScriptResult); ok {
+		if x, ok := x.Payload.(*AgentMessage_ScriptResult); ok {
 			return x.ScriptResult
 		}
 	}
 	return nil
 }
 
-type isOutpostMessage_Payload interface {
-	isOutpostMessage_Payload()
+type isAgentMessage_Payload interface {
+	isAgentMessage_Payload()
 }
 
-type OutpostMessage_Metrics struct {
+type AgentMessage_Metrics struct {
 	Metrics *HostMetrics `protobuf:"bytes,1,opt,name=metrics,proto3,oneof"`
 }
 
-type OutpostMessage_ScriptResult struct {
+type AgentMessage_ScriptResult struct {
 	ScriptResult *ScriptResult `protobuf:"bytes,2,opt,name=script_result,json=scriptResult,proto3,oneof"`
 }
 
-func (*OutpostMessage_Metrics) isOutpostMessage_Payload() {}
+func (*AgentMessage_Metrics) isAgentMessage_Payload() {}
 
-func (*OutpostMessage_ScriptResult) isOutpostMessage_Payload() {}
+func (*AgentMessage_ScriptResult) isAgentMessage_Payload() {}
 
-// Wrapper for messages from collector to outpost
+// Wrapper for messages from collector to agent
 type CollectorMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Payload:
@@ -443,7 +443,7 @@ func (*CollectorMessage_Ack) isCollectorMessage_Payload() {}
 
 func (*CollectorMessage_ScriptCommand) isCollectorMessage_Payload() {}
 
-// Script to be executed on outpost
+// Script to be executed on agent
 type ScriptCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ScriptId      string                 `protobuf:"bytes,1,opt,name=script_id,json=scriptId,proto3" json:"script_id,omitempty"`       // Unique identifier for the script
@@ -612,8 +612,8 @@ const file_proto_metrics_proto_rawDesc = "" +
 	"\x12used_storage_bytes\x18\x03 \x01(\x03R\x10usedStorageBytes\"D\n" +
 	"\x0eAcknowledgment\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x8b\x01\n" +
-	"\x0eOutpostMessage\x120\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x89\x01\n" +
+	"\fAgentMessage\x120\n" +
 	"\ametrics\x18\x01 \x01(\v2\x14.metrics.HostMetricsH\x00R\ametrics\x12<\n" +
 	"\rscript_result\x18\x02 \x01(\v2\x15.metrics.ScriptResultH\x00R\fscriptResultB\t\n" +
 	"\apayload\"\x8b\x01\n" +
@@ -634,9 +634,9 @@ const file_proto_metrics_proto_rawDesc = "" +
 	"\x06stdout\x18\x04 \x01(\tR\x06stdout\x12\x16\n" +
 	"\x06stderr\x18\x05 \x01(\tR\x06stderr\x12\x1f\n" +
 	"\vexecuted_at\x18\x06 \x01(\x03R\n" +
-	"executedAt2[\n" +
-	"\x10MetricsCollector\x12G\n" +
-	"\rStreamMetrics\x12\x17.metrics.OutpostMessage\x1a\x19.metrics.CollectorMessage(\x010\x01B$Z\"github.com/metorial/sentinel/protob\x06proto3"
+	"executedAt2Y\n" +
+	"\x10MetricsCollector\x12E\n" +
+	"\rStreamMetrics\x12\x15.metrics.AgentMessage\x1a\x19.metrics.CollectorMessage(\x010\x01B$Z\"github.com/metorial/sentinel/protob\x06proto3"
 
 var (
 	file_proto_metrics_proto_rawDescOnce sync.Once
@@ -656,7 +656,7 @@ var file_proto_metrics_proto_goTypes = []any{
 	(*HostInfo)(nil),         // 1: metrics.HostInfo
 	(*ResourceUsage)(nil),    // 2: metrics.ResourceUsage
 	(*Acknowledgment)(nil),   // 3: metrics.Acknowledgment
-	(*OutpostMessage)(nil),   // 4: metrics.OutpostMessage
+	(*AgentMessage)(nil),     // 4: metrics.AgentMessage
 	(*CollectorMessage)(nil), // 5: metrics.CollectorMessage
 	(*ScriptCommand)(nil),    // 6: metrics.ScriptCommand
 	(*ScriptResult)(nil),     // 7: metrics.ScriptResult
@@ -664,11 +664,11 @@ var file_proto_metrics_proto_goTypes = []any{
 var file_proto_metrics_proto_depIdxs = []int32{
 	1, // 0: metrics.HostMetrics.info:type_name -> metrics.HostInfo
 	2, // 1: metrics.HostMetrics.usage:type_name -> metrics.ResourceUsage
-	0, // 2: metrics.OutpostMessage.metrics:type_name -> metrics.HostMetrics
-	7, // 3: metrics.OutpostMessage.script_result:type_name -> metrics.ScriptResult
+	0, // 2: metrics.AgentMessage.metrics:type_name -> metrics.HostMetrics
+	7, // 3: metrics.AgentMessage.script_result:type_name -> metrics.ScriptResult
 	3, // 4: metrics.CollectorMessage.ack:type_name -> metrics.Acknowledgment
 	6, // 5: metrics.CollectorMessage.script_command:type_name -> metrics.ScriptCommand
-	4, // 6: metrics.MetricsCollector.StreamMetrics:input_type -> metrics.OutpostMessage
+	4, // 6: metrics.MetricsCollector.StreamMetrics:input_type -> metrics.AgentMessage
 	5, // 7: metrics.MetricsCollector.StreamMetrics:output_type -> metrics.CollectorMessage
 	7, // [7:8] is the sub-list for method output_type
 	6, // [6:7] is the sub-list for method input_type
@@ -683,8 +683,8 @@ func file_proto_metrics_proto_init() {
 		return
 	}
 	file_proto_metrics_proto_msgTypes[4].OneofWrappers = []any{
-		(*OutpostMessage_Metrics)(nil),
-		(*OutpostMessage_ScriptResult)(nil),
+		(*AgentMessage_Metrics)(nil),
+		(*AgentMessage_ScriptResult)(nil),
 	}
 	file_proto_metrics_proto_msgTypes[5].OneofWrappers = []any{
 		(*CollectorMessage_Ack)(nil),

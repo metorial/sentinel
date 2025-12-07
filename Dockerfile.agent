@@ -1,0 +1,25 @@
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /build
+
+RUN apk add --no-cache gcc musl-dev sqlite-dev protobuf-dev
+
+COPY go.mod go.sum ./
+RUN GOTOOLCHAIN=auto go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o agent ./cmd/agent
+
+FROM alpine:3.19
+
+# Work around QEMU/buildkit trigger issue by using --no-scripts
+RUN apk add --no-cache --no-scripts sqlite-libs ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /build/agent /app/agent
+
+EXPOSE 9090
+
+CMD ["/app/agent"]

@@ -67,8 +67,8 @@ func TestStreamMetrics(t *testing.T) {
 		},
 	}
 
-	msg := &pb.OutpostMessage{
-		Payload: &pb.OutpostMessage_Metrics{
+	msg := &pb.AgentMessage{
+		Payload: &pb.AgentMessage_Metrics{
 			Metrics: metrics,
 		},
 	}

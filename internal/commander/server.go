@@ -59,7 +59,7 @@ func (s *Server) StreamMetrics(stream pb.MetricsCollector_StreamMetricsServer) e
 		}
 
 		switch payload := msg.Payload.(type) {
-		case *pb.OutpostMessage_Metrics:
+		case *pb.AgentMessage_Metrics:
 			metrics := payload.Metrics
 			if hostname == "" {
 				hostname = metrics.Hostname
@@ -95,7 +95,7 @@ func (s *Server) StreamMetrics(stream pb.MetricsCollector_StreamMetricsServer) e
 				return err
 			}
 
-		case *pb.OutpostMessage_ScriptResult:
+		case *pb.AgentMessage_ScriptResult:
 			result := payload.ScriptResult
 			if err := s.handleScriptResult(hostname, result); err != nil {
 				log.Printf("Error handling script result: %v", err)

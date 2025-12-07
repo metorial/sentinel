@@ -13,9 +13,9 @@ A lightweight system for collecting and querying host metrics across a distribut
 
 ## Components
 
-**controller** - Central API server that receives metrics from outpost agents and stores them in SQLite. Provides HTTP endpoints for querying host information, managing scripts, and viewing execution results.
+**controller** - Central API server that receives metrics from agent agents and stores them in SQLite. Provides HTTP endpoints for querying host information, managing scripts, and viewing execution results.
 
-**outpost** - Agent that runs on each node to collect system metrics and execute scripts received from the controller.
+**agent** - Agent that runs on each node to collect system metrics and execute scripts received from the controller.
 
 **nodectl** - Command-line tool to interact with the controller API. Query health status, list hosts, view usage stats.
 
@@ -30,12 +30,12 @@ docker run -d -p 8080:8080 -p 9090:9090 \
   ghcr.io/metorial/sentinel-controller:latest
 ```
 
-Deploy outpost agents on your nodes:
+Deploy agent agents on your nodes:
 
 ```bash
 docker run -d \
   -e COLLECTOR_URL=controller.example.com:9090 \
-  ghcr.io/metorial/sentinel-outpost:latest
+  ghcr.io/metorial/sentinel-agent:latest
 ```
 
 ### Option 2: Consul Service Discovery
@@ -48,15 +48,15 @@ docker run -d -p 8080:8080 -p 9090:9090 \
   ghcr.io/metorial/sentinel-controller:latest
 ```
 
-Deploy outpost agents:
+Deploy agent agents:
 
 ```bash
 docker run -d \
   -e CONSUL_HTTP_ADDR=consul.example.com:8500 \
-  ghcr.io/metorial/sentinel-outpost:latest
+  ghcr.io/metorial/sentinel-agent:latest
 ```
 
-**Note:** Either `COLLECTOR_URL` or `CONSUL_HTTP_ADDR` must be set for outposts. `COLLECTOR_URL` takes precedence if both are set.
+**Note:** Either `COLLECTOR_URL` or `CONSUL_HTTP_ADDR` must be set for agents. `COLLECTOR_URL` takes precedence if both are set.
 
 ## Using the CLI
 
@@ -89,7 +89,7 @@ Sentinel integrates with Consul for automatic service discovery and health check
    - HTTP API: `sentinel-controller-http` (REST on port 8080)
    - Health checks on both endpoints
 
-2. **Outpost Discovery**: Outposts query Consul for the `sentinel-controller` service
+2. **agent Discovery**: agents query Consul for the `sentinel-controller` service
    - Automatic reconnection if controller address changes
    - Polling interval: 10 seconds
 
@@ -107,7 +107,7 @@ Sentinel integrates with Consul for automatic service discovery and health check
 - `DB_PATH` - SQLite database path (default: /data/metrics.db)
 - `CONSUL_HTTP_ADDR` - Consul address for registration (optional)
 
-**Outpost:**
+**agent:**
 - `COLLECTOR_URL` - Direct controller address (e.g., `controller:9090`)
 - `CONSUL_HTTP_ADDR` - Consul address for service discovery
 - **Note:** Either `COLLECTOR_URL` or `CONSUL_HTTP_ADDR` must be set
@@ -118,15 +118,15 @@ Sentinel integrates with Consul for automatic service discovery and health check
 graph TB
   Consul[Consul<br/>Service Registry]
   Controller[Controller Server<br/>gRPC + HTTP]
-  Outposts[Outpost Agents<br/>Nodes 1..N]
+  agents[agent Agents<br/>Nodes 1..N]
   CLI[nodectl CLI]
   DB[(SQLite DB)]
 
   Controller --> Consul
-  Consul --> Outposts
+  Consul --> agents
 
-  Outposts -->|gRPC Stream| Controller
-  Controller -->|Script Commands| Outposts
+  agents -->|gRPC Stream| Controller
+  Controller -->|Script Commands| agents
 
   Controller <-->|R/W| DB
   CLI -->|REST API| Controller

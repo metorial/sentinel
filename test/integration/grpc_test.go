@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/metorial/sentinel/internal/commander"
-	"github.com/metorial/sentinel/internal/outpost"
+	"github.com/metorial/sentinel/internal/agent"
 	pb "github.com/metorial/sentinel/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -48,7 +48,7 @@ func TestFullGRPCFlow(t *testing.T) {
 	serverAddr := listener.Addr().String()
 	t.Logf("Server listening on %s", serverAddr)
 
-	mc, err := outpost.NewMetricsCollector()
+	mc, err := agent.NewMetricsCollector()
 	if err != nil {
 		t.Fatalf("Failed to create metrics collector: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestFullGRPCFlow(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+		msg := &pb.AgentMessage{Payload: &pb.AgentMessage_Metrics{Metrics: metrics}}
 		if err := stream.Send(msg); err != nil {
 			t.Fatalf("Failed to send metrics: %v", err)
 		}
@@ -187,7 +187,7 @@ func TestMultipleClients(t *testing.T) {
 			}
 
 			for j := 0; j < 3; j++ {
-				msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+				msg := &pb.AgentMessage{Payload: &pb.AgentMessage_Metrics{Metrics: metrics}}
 				if err := stream.Send(msg); err != nil {
 					t.Errorf("Client %d: Failed to send metrics: %v", clientID, err)
 					done <- false
@@ -311,7 +311,7 @@ func TestInactiveHostMarking(t *testing.T) {
 		},
 	}
 
-	msg := &pb.OutpostMessage{Payload: &pb.OutpostMessage_Metrics{Metrics: metrics}}
+	msg := &pb.AgentMessage{Payload: &pb.AgentMessage_Metrics{Metrics: metrics}}
 	if err := stream.Send(msg); err != nil {
 		t.Fatalf("Failed to send metrics: %v", err)
 	}

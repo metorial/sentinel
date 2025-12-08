@@ -1,4 +1,4 @@
-.PHONY: all proto build build-commander build-agent build-cli docker clean install-agent install-cli test test-unit test-integration test-coverage
+.PHONY: all proto build build-controller build-agent build-cli docker clean install-agent install-cli test test-unit test-integration test-coverage
 
 all: proto build
 
@@ -10,7 +10,7 @@ proto:
 build: build-controller build-agent build-cli
 
 build-controller:
-	CGO_ENABLED=0 go build -o bin/controller ./cmd/commander
+	CGO_ENABLED=0 go build -o bin/controller ./cmd/controller
 
 build-agent:
 	CGO_ENABLED=0 go build -o bin/agent ./cmd/agent

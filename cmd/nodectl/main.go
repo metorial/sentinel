@@ -115,7 +115,7 @@ var statsCmd = &cobra.Command{
 
 func init() {
 	// Check for environment variable, fallback to default
-	defaultServerURL := os.Getenv("NODECTL_SERVER_URL")
+	defaultServerURL := os.Getenv("CONTROLLER_URL")
 	if defaultServerURL == "" {
 		defaultServerURL = "http://localhost:8080"
 	}

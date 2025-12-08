@@ -9,7 +9,7 @@ RUN GOTOOLCHAIN=auto go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o commander ./cmd/commander
+RUN CGO_ENABLED=1 GOOS=linux GOTOOLCHAIN=auto go build -o controller ./cmd/controller
 
 FROM alpine:3.19
 
@@ -18,10 +18,10 @@ RUN apk add --no-cache --no-scripts sqlite-libs ca-certificates tzdata
 
 WORKDIR /app
 
-COPY --from=builder /build/commander /app/commander
+COPY --from=builder /build/controller /app/controller
 
 RUN mkdir -p /data && chmod 777 /data
 
 EXPOSE 9090 8080
 
-CMD ["/app/commander"]
+CMD ["/app/controller"]

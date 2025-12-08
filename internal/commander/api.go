@@ -32,6 +32,7 @@ func (api *API) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/scripts", api.handleScripts)
 	mux.HandleFunc("/api/v1/scripts/", api.handleScript)
 	mux.HandleFunc("/api/v1/tags", api.handleTags)
+	mux.HandleFunc("/", api.handleUI)
 }
 
 func (api *API) handleHosts(w http.ResponseWriter, r *http.Request) {
@@ -343,4 +344,18 @@ func (api *API) handleHostTags(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (api *API) handleUI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	http.ServeFile(w, r, "web/static/index.html")
 }

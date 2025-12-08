@@ -24,11 +24,11 @@ func main() {
 }
 
 func run() error {
-	collectorURL := os.Getenv("COLLECTOR_URL")
+	collectorURL := os.Getenv("CONTROLLER_URL")
 	consulAddr := getEnv("CONSUL_HTTP_ADDR", "")
 
 	if collectorURL == "" && consulAddr == "" {
-		log.Fatal("Either COLLECTOR_URL or CONSUL_HTTP_ADDR must be set")
+		log.Fatal("Either CONTROLLER_URL or CONSUL_HTTP_ADDR must be set")
 	}
 
 	log.Printf("Starting agent service")

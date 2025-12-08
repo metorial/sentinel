@@ -24,7 +24,7 @@ jobs:
         binary:
           - name: controller
             dockerfile: Dockerfile.controller
-            description: "Sentinel Controller - API server for collecting and querying host metrics"
+            description: "Sentinel controller - API server for collecting and querying host metrics"
           - name: agent
             dockerfile: Dockerfile.agent
             description: "Sentinel Agent - Agent for collecting system metrics"
